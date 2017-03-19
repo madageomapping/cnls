@@ -1,0 +1,96 @@
+version: '2'
+
+volumes:
+   minio_data:
+
+services:
+   portainer:
+     image: portainer/portainer:arm
+     container_name: portainer
+     restart: always
+     expose:
+        - "9000"
+     volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+
+   proxy:
+     image: madageomapping/arm-alpine_caddy
+     depends_on:
+       - django_cnls
+     ports:
+        - 80:80
+        - 443:443
+     volumes:
+        - ./Caddyfile:/etc/Caddyfile
+        - ./.caddy:/root/.caddy
+        - ./log/error.log:/log/error.log
+
+   minio:
+     image: alexellis2/minio-armhf:latest
+     #ports:
+     #  - "9001:9000"
+     expose:
+       - "9000"
+     volumes:
+       - ./minio/data:/objects
+       - ./minio/config:/root/.minio
+     environment:
+       - "MINIO_ACCESS_KEY=CNLSMADAGASCAR"
+       - "MINIO_SECRET_KEY=CNLS/MADAGASCAR/CARTONG/ORG"
+     #command: server /export
+     #command: create bucket database_backup
+
+   db:
+     image: madageomapping/arm-alpine_postgis_9.5.4_2.2.2 
+     container_name: postgis_9.5.4_2.2.2
+     expose:
+        - "5432"
+     volumes:
+        - ./db-data:/var/lib/postgresql/data
+     environment:
+       POSTGRES_USER: "django"
+       POSTGRES_PASWORD: "Cart0M@d@"
+
+   pgadmin:
+     image: madageomapping/armhf-python2.7_alpine-pgdamin4 
+     container_name: pgadmin4_cnls
+     depends_on:
+       - db
+     expose:
+       - "5050"
+     #ports:
+     #  - "5050"
+     links:
+        - db:postgres
+        - minio
+     volumes:
+       - ./minio/data:/database_backup:rw
+
+   django_cnls:
+     image: madageomapping/geodjango_app
+     container_name: django_1.8.5_cnls 
+     depends_on:
+       - db
+     expose:
+        - "8000"
+     volumes:
+        - ./mada-onusida:/webapp/mada-onusida 
+     working_dir: /webapp/mada-onusida
+##     command: bash -c "pip install -r requirements.txt; python3 manage.py makemigrations && python3 manage.py migrate && gunicorn mydjango.wsgi -b 0.0.0.0:8000" 
+     command: bash -c "python3 manage.py runserver 0.0.0.0:8000" 
+#     command: bash -c "pip install -r requirements.txt; python3 manage.py migrate && python3 manage.py collectstatic --noinput && gunicorn cartong.wsgi -b 0.0.0.0:8000" 
+     links:
+        - db:postgis
+
+
+#volumes:
+#  data-cnls:
+#  data-cnls:
+#    driver: local
+#    driver_opts:
+#      type: nfs
+#      o: addr=10.1.44.54,rw
+#      device: ":/home/nfs/data-cnls"
+
+#  volume_cnls:
+#    external: true

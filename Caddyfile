@@ -1,0 +1,47 @@
+cnlsmadagascar.cartong.org {
+    tls herizo.razanajao@gmail.com
+    errors {
+        log /log/error.log
+    }
+    proxy / django_cnls:8000 {
+        proxy_header Host {host}
+        proxy_header X-Real-IP {remote}
+        proxy_header X-Forwarded-Proto {scheme}
+    }
+}
+
+portainer.cnlsmadagascar.cartong.org {
+    tls herizo.razanajao@gmail.com
+    errors {
+        log /log/error_portainer.log
+    }
+    proxy / portainer:9000 {
+        proxy_header Host {host}
+        proxy_header X-Real-IP {remote}
+        proxy_header X-Forwarded-Proto {scheme}
+    }
+}
+
+pgadmin.cnlsmadagascar.cartong.org {
+    tls herizo.razanajao@gmail.com
+    errors {
+        log /log/error_pgadmin.log
+    }
+    proxy / pgadmin:5050 {
+        proxy_header Host {host}
+        proxy_header X-Real-IP {remote}
+        proxy_header X-Forwarded-Proto {scheme}
+    }
+}
+
+cloud.cnlsmadagascar.cartong.org {
+    tls herizo.razanajao@gmail.com
+    errors {
+        log /log/error_minio.log
+    }
+    proxy / minio:9000 {
+        proxy_header Host {host}
+        proxy_header X-Real-IP {remote}
+        proxy_header X-Forwarded-Proto {scheme}
+    }
+}
